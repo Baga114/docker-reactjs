@@ -15,6 +15,3 @@ phases:
 #       - echo Deploying to Kubernetes...
 #       - kubectl apply -f kubernetes-manifests/
 
- artifacts:
-   files: '*'
-#hjg
