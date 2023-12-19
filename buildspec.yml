@@ -4,12 +4,6 @@ phases:
   install:
     runtime-versions:
       python: 3.11
-    commands:
-      # - echo Installing Docker...
-      # - apt-get update
-      # - apt-get install -y docker.io
-      # - docker images
-      # - docker build -t testing .
    pre_build:
      commands:
        - echo Logging in to Amazon ECR...
