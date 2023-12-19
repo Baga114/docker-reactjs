@@ -1,17 +1,13 @@
 version: 0.2
 phases:
-   pre_build:
-     commands:
-       - echo Logging in to Amazon ECR...
-       - $(aws ecr get-login --no-include-email --region $AWS_REGION)
-   build:
-     commands:
-        - echo Building Docker image...
-        - docker build -t 242236232945.dkr.ecr.ca-central-1.amazonaws.com/devops:latest
-        - docker push 242236232945.dkr.ecr.ca-central-1.amazonaws.com/devops:latest
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 242236232945.dkr.ecr.ca-central-1.amazonaws.com
+  build:
+    commands:
+      - echo Building Docker image...
+      - docker build -t 242236232945.dkr.ecr.ca-central-1.amazonaws.com/devops:latest .
+      - docker push 242236232945.dkr.ecr.ca-central-1.amazonaws.com/devops:latest
 
-#   post_build:
-#     commands:
-#       - echo Deploying to Kubernetes...
-#       - kubectl apply -f kubernetes-manifests/
 
