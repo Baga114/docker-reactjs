@@ -5,26 +5,26 @@ phases:
     runtime-versions:
       python: 3.11
     commands:
-      - echo Installing Docker...
-      - apt-get update
-      - apt-get install -y docker.io
-      - docker images
-      - docker build -t testing .
-  # pre_build:
-  #   commands:
-  #     - echo Logging in to Amazon ECR...
-  #     #- $(aws ecr get-login --no-include-email --region $AWS_REGION)
+      # - echo Installing Docker...
+      # - apt-get update
+      # - apt-get install -y docker.io
+      # - docker images
+      # - docker build -t testing .
+   pre_build:
+     commands:
+       - echo Logging in to Amazon ECR...
+       - $(aws ecr get-login --no-include-email --region $AWS_REGION)
 
-  # build:
-  #   commands:
-  #     - echo Building Docker image...
-  #     - docker build -t 400926585409.dkr.ecr.us-east-1.amazonaws.com/reactapp:latest
-  #     - docker push A400926585409.dkr.ecr.us-east-1.amazonaws.com/reactapp:latest
+   build:
+     commands:
+        - echo Building Docker image...
+        - docker build -t 242236232945.dkr.ecr.ca-central-1.amazonaws.com/devops:latest
+        - docker push 242236232945.dkr.ecr.ca-central-1.amazonaws.com/devops:latest
 
 #   post_build:
 #     commands:
 #       - echo Deploying to Kubernetes...
 #       - kubectl apply -f kubernetes-manifests/
 
-# artifacts:
-#   files: '*'
+ artifacts:
+   files: '*'
