@@ -11,7 +11,7 @@ phases:
         - pwd 
         - ls -al
         - echo "Update Image tag in kube-manifest..."
-        - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:latest"'@' kube-manifests/01-DEVOPS-Deployment.yml
+        - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:latest"'@' kube-manifests/01-DEVOPS-Nginx-Deployment.yml
         # Verify AWS CLI Version        
         - echo "Verify AWS CLI Version..."
         - aws --version
