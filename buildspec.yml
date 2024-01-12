@@ -13,6 +13,7 @@ phases:
     commands:
       - npm install -g snyk
       - snyk auth $SNYK_TOKEN
+      - npm install
       - snyk test
       - snyk monitor --org=1226e436-a544-4db3-8eaf-6177bd464474 
       - echo "Start SonarQube code scan..."
