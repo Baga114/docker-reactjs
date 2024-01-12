@@ -20,7 +20,7 @@ phases:
       - /tmp/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner -Dsonar.projectKey=$SONAR_QUBE_PROJECT -Dsonar.sources=. -Dsonar.host.url=$SONAR_QUBE_URL -Dsonar.login=$SONAR_QUBE_KEY
       - sleep 7
       - "curl -s -u $SONAR_QUBE_KEY: $SONAR_QUBE_URL/api/qualitygates/project_status?projectKey=$SONAR_QUBE_PROJECT > /tmp/result.json"
-      - if [ $(jq -r '.projectStatus.status' /tmp/result.json) = ERROR ] ; then CODEBUILD_BUILD_SUCCEEDING=0 ; fi
+      - if [ "$(jq -r '.projectStatus.status' /tmp/result.json)" = "ERROR" ] || [ "$(jq -r '.projectStatus.status' /tmp/result.json)" = "FAILED" ]; then CODEBUILD_BUILD_SUCCEEDING=0; fi
       - echo "SonarQube code scan completed on `date`"
       - if [ "$CODEBUILD_BUILD_SUCCEEDING" -eq 0 ]; then exit 1; fi
       - echo "Update Image tag in kube-manifest..."
