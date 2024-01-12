@@ -14,9 +14,7 @@ phases:
       - npm install -g snyk@latest
       - snyk auth $SNYK_TOKEN
       - npm install
-      - set +e
-      - snyk test 
-      - set -e 
+      - snyk test || true 
       - snyk monitor --org=1226e436-a544-4db3-8eaf-6177bd464474 
       # - echo "Start SonarQube code scan..."
       # - /tmp/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner -Dsonar.projectKey=$SONAR_QUBE_PROJECT -Dsonar.sources=. -Dsonar.host.url=$SONAR_QUBE_URL -Dsonar.login=$SONAR_QUBE_KEY
