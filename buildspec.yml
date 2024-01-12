@@ -1,53 +1,51 @@
 version: 0.2
-
 phases:
   install:
     commands:
-      - echo "Install Phase - Nothing to do using latest Amazon Linux Docker Image for CodeBuild which has all AWS Tools - https://github.com/aws/aws-codebuild-docker-images/blob/master/al2/x86_64/standard/3.0/Dockerfile"
+      - echo "Install Phase - Installing dependencies"
+      - pip3 install -q awscli --upgrade --user
+      - pip3 install boto3
+      - apt-get update && apt-get install -y jq
+      - wget -qO /tmp/sonar-scanner.zip "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.7.0.2747-linux.zip"
+      - unzip -q /tmp/sonar-scanner.zip -d /tmp
 
   pre_build:
     commands:
+      - npm install -g snyk
+      - snyk auth $SNYK_TOKEN
+      - snyk test
+      - snyk monitor --org=1226e436-a544-4db3-8eaf-6177bd464474 
+      - echo "Start SonarQube code scan..."
+      - /tmp/sonar-scanner-4.7.0.2747-linux/bin/sonar-scanner -Dsonar.projectKey=$SONAR_QUBE_PROJECT -Dsonar.sources=. -Dsonar.host.url=$SONAR_QUBE_URL -Dsonar.login=$SONAR_QUBE_KEY
+      - sleep 7
+      - "curl -s -u $SONAR_QUBE_KEY: $SONAR_QUBE_URL/api/qualitygates/project_status?projectKey=$SONAR_QUBE_PROJECT > /tmp/result.json"
+      - if [ $(jq -r '.projectStatus.status' /tmp/result.json) = ERROR ] ; then CODEBUILD_BUILD_SUCCEEDING=0 ; fi
+      - echo "SonarQube code scan completed on `date`"
+      - if [ "$CODEBUILD_BUILD_SUCCEEDING" -eq 0 ]; then exit 1; fi
       - echo "Update Image tag in kube-manifest..."
       - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI:latest"'@' kube-manifests/01-DEVOPS-Nginx-Deployment.yml
-      - echo "Verify AWS CLI Version..."
-      - aws --version
       - echo "Login in to Amazon ECR..."
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 400926585409.dkr.ecr.us-east-1.amazonaws.com
+      - aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 242236232945.dkr.ecr.ca-central-1.amazonaws.com
       - export KUBECONFIG=$HOME/.kube/config
 
   build:
     commands:
-      - echo "Build started on `date`"
-      - echo "Building the Docker image..."
       - docker build --tag $REPOSITORY_URI:latest .
-      # SonarQube analysis
-      - echo "Starting SonarQube analysis..."
-      - export SONAR_SCANNER_VERSION=4.7.0.2747
-      - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
-      - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
-      - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
-      - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
-      - export SONAR_SCANNER_OPTS="-server"
-      - sonar-scanner \
-          -Dsonar.projectKey=react_projectkjbhuvubu \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=http://99.79.76.181:9000
-
+      
   post_build:
-    commands:
+    commands:    
       - echo "Build completed on `date`"
-      - echo "Pushing the Docker image to ECR Repository"
+      - echo "Pushing the Docker image..."
       - docker push $REPOSITORY_URI:latest
-      - echo "Docker Image Push to ECR Completed -  $REPOSITORY_URI:$TAG"
-      - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"          
-      - aws sts assume-role --role-arn arn:aws:iam::400926585409:role/EksCodeBuildKubectlRole --role-session-name codebuild-service-role --duration-seconds 900
-      - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
-      - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
-      - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
-      - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
-      - echo "Update Kube Config"      
-      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
-      - kubectl get nodes
-      - kubectl apply -f kube-manifests/
-      - printf '[{"name":"01-DEVOPS-Nginx-Deployment.yml","imageUri":"%s"}]' $REPOSITORY_URI:latest > build.json
-
+      # - echo "Setting AWS CLI environment variables"
+      # - export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+      # - export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+      # - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+      # - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+      # - aws sts assume-role --role-arn arn:aws:iam::242236232945:role/EksCodeBuildKubectlRole --role-session-name codebuild-service-role --duration-seconds 900
+      # - echo "Update Kube Config"
+      # - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+      # - kubectl apply -f kube-manifests/
+      # - printf '[{"name":"01-DEVOPS-Nginx-Deployment.yml","imageUri":"%s"}]' $REPOSITORY_URI:latest > build.json
+      # - kubectl delete pods -l app=my-app
+      
